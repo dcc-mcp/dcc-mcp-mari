@@ -1,22 +1,181 @@
 tools:
-  - name: get_status
-    description: Check Mari bridge availability. Read-only.
-    input_schema: {type: object, properties: {}, additionalProperties: false}
-    output_schema: {type: object}
-    read_only: true
-    destructive: false
-    idempotent: true
-    execution: sync
-    affinity: any
+  - name: ping
+    description: Verify the authenticated Mari bridge and return host metadata.
     source_file: scripts/get_status.py
-  - name: inspect_project
-    description: Read-only project inspection.
     input_schema: {type: object, properties: {}, additionalProperties: false}
     output_schema: {type: object}
-    read_only: true
-    destructive: false
-    idempotent: true
     execution: sync
-    affinity: any
-    source_file: scripts/inspect_host.py
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 10
+    annotations: {read_only_hint: true, destructive_hint: false, idempotent_hint: true, open_world_hint: false, deferred_hint: false}
 
+  - name: inspect_project
+    description: Inspect the active project, geometry entities, channels, shaders, and images.
+    source_file: scripts/inspect_host.py
+    input_schema: {type: object, properties: {}, additionalProperties: false}
+    output_schema: {type: object}
+    execution: sync
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 30
+    annotations: {read_only_hint: true, destructive_hint: false, idempotent_hint: true, open_world_hint: false, deferred_hint: false}
+
+  - name: list_projects
+    description: List projects known to Mari and identify the current project.
+    source_file: scripts/list_projects.py
+    input_schema: {type: object, properties: {}, additionalProperties: false}
+    output_schema: {type: object}
+    execution: sync
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 30
+    annotations: {read_only_hint: true, destructive_hint: false, idempotent_hint: true, open_world_hint: false, deferred_hint: false}
+
+  - name: create_project
+    description: Create a Mari project from existing geometry and optional channel specifications.
+    source_file: scripts/create_project.py
+    input_schema:
+      type: object
+      required: [name, geometry_paths]
+      properties:
+        name: {type: string, minLength: 1}
+        geometry_paths:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: {type: string, minLength: 1}
+        channels:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            required: [name]
+            properties:
+              name: {type: string, minLength: 1}
+              width: {type: integer, minimum: 1, maximum: 32768}
+              height: {type: integer, minimum: 1, maximum: 32768}
+              depth: {oneOf: [{type: string}, {type: integer}]}
+              fill_color:
+                type: array
+                minItems: 3
+                maxItems: 4
+                items: {type: number}
+            additionalProperties: false
+        project_options: {type: object}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: async
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 600
+    annotations: {read_only_hint: false, destructive_hint: false, idempotent_hint: false, open_world_hint: true, deferred_hint: true}
+
+  - name: open_project
+    description: Open a Mari project by its name, UUID, or host-supported identifier.
+    source_file: scripts/open_project.py
+    input_schema:
+      type: object
+      required: [project]
+      properties: {project: {type: string, minLength: 1}}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: async
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 600
+    annotations: {read_only_hint: false, destructive_hint: false, idempotent_hint: false, open_world_hint: false, deferred_hint: true}
+
+  - name: save_project
+    description: Save the active Mari project.
+    source_file: scripts/save_project.py
+    input_schema:
+      type: object
+      properties: {force: {type: boolean, default: false}}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: async
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 600
+    annotations: {read_only_hint: false, destructive_hint: false, idempotent_hint: true, open_world_hint: false, deferred_hint: true}
+
+  - name: close_project
+    description: Close the active project, refusing unsaved changes unless discard is explicit.
+    source_file: scripts/close_project.py
+    input_schema:
+      type: object
+      properties: {discard_changes: {type: boolean, default: false}}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: sync
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 120
+    annotations: {read_only_hint: false, destructive_hint: true, idempotent_hint: false, open_world_hint: false, deferred_hint: false}
+
+  - name: archive_project
+    description: Archive a closed project to an absolute .mra output path.
+    source_file: scripts/archive_project.py
+    input_schema:
+      type: object
+      required: [path, project]
+      properties:
+        path: {type: string, minLength: 1}
+        project: {type: string, minLength: 1}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: async
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 1200
+    annotations: {read_only_hint: false, destructive_hint: false, idempotent_hint: false, open_world_hint: true, deferred_hint: true}
+
+  - name: rename_project
+    description: Rename a closed Mari project.
+    source_file: scripts/rename_project.py
+    input_schema:
+      type: object
+      required: [project, new_name]
+      properties:
+        project: {type: string, minLength: 1}
+        new_name: {type: string, minLength: 1}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: async
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 600
+    annotations: {read_only_hint: false, destructive_hint: false, idempotent_hint: false, open_world_hint: false, deferred_hint: true}
+
+  - name: duplicate_project
+    description: Duplicate a closed Mari project under a new name.
+    source_file: scripts/duplicate_project.py
+    input_schema:
+      type: object
+      required: [project, new_name]
+      properties:
+        project: {type: string, minLength: 1}
+        new_name: {type: string, minLength: 1}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: async
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 1200
+    annotations: {read_only_hint: false, destructive_hint: false, idempotent_hint: false, open_world_hint: false, deferred_hint: true}
+
+  - name: remove_project
+    description: Permanently remove a closed Mari project by name or UUID.
+    source_file: scripts/remove_project.py
+    input_schema:
+      type: object
+      required: [project]
+      properties: {project: {type: string, minLength: 1}}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: async
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 600
+    annotations: {read_only_hint: false, destructive_hint: true, idempotent_hint: false, open_world_hint: false, deferred_hint: true}
