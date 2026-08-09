@@ -10,7 +10,7 @@ metadata:
   dcc-mcp:
     dcc: mari
     layer: domain
-    version: "0.1.0"  # x-release-please-version
+    version: "0.2.0"  # x-release-please-version
     stage: geometry
     search-hint: "Mari geometry mesh import channel resolution depth colorspace"
     tags: "mari,geometry,channel,texture"
