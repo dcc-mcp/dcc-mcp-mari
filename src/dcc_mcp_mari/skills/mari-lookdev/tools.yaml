@@ -1,0 +1,206 @@
+tools:
+  - name: list_shaders
+    description: List shaders on the selected or current geometry entity.
+    source_file: scripts/list_shaders.py
+    input_schema:
+      type: object
+      properties: {geometry: {type: string, minLength: 1}}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: sync
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 60
+    annotations: {read_only_hint: true, destructive_hint: false, idempotent_hint: true, open_world_hint: false, deferred_hint: false}
+
+  - name: create_shader
+    description: Create a standalone or layered shader from an installed Mari shader type.
+    source_file: scripts/create_shader.py
+    input_schema:
+      type: object
+      required: [name, shader_type]
+      properties:
+        geometry: {type: string, minLength: 1}
+        name: {type: string, minLength: 1}
+        shader_type: {type: string, minLength: 1}
+        shader_kind: {type: string, enum: [standalone, layered], default: standalone}
+        make_current: {type: boolean, default: false}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: async
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 300
+    annotations: {read_only_hint: false, destructive_hint: false, idempotent_hint: false, open_world_hint: false, deferred_hint: true}
+
+  - name: update_shader
+    description: Rename a shader and update explicit parameters or channel inputs.
+    source_file: scripts/update_shader.py
+    input_schema:
+      type: object
+      required: [shader]
+      properties:
+        geometry: {type: string, minLength: 1}
+        shader: {type: string, minLength: 1}
+        name: {type: string, minLength: 1}
+        parameters: {type: object}
+        channel_inputs:
+          type: object
+          additionalProperties: {type: string, minLength: 1}
+        make_current: {type: boolean}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: sync
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 180
+    annotations: {read_only_hint: false, destructive_hint: false, idempotent_hint: true, open_world_hint: false, deferred_hint: false}
+
+  - name: remove_shader
+    description: Remove one shader from a geometry entity.
+    source_file: scripts/remove_shader.py
+    input_schema:
+      type: object
+      required: [shader]
+      properties:
+        geometry: {type: string, minLength: 1}
+        shader: {type: string, minLength: 1}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: sync
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 120
+    annotations: {read_only_hint: false, destructive_hint: true, idempotent_hint: false, open_world_hint: false, deferred_hint: false}
+
+  - name: list_images
+    description: List imported images in the active Mari project.
+    source_file: scripts/list_images.py
+    input_schema: {type: object, properties: {}, additionalProperties: false}
+    output_schema: {type: object}
+    execution: sync
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 60
+    annotations: {read_only_hint: true, destructive_hint: false, idempotent_hint: true, open_world_hint: false, deferred_hint: false}
+
+  - name: import_image
+    description: Import one existing image file into the active project.
+    source_file: scripts/import_image.py
+    input_schema:
+      type: object
+      required: [path]
+      properties:
+        path: {type: string, minLength: 1}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: async
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 300
+    annotations: {read_only_hint: false, destructive_hint: false, idempotent_hint: false, open_world_hint: true, deferred_hint: true}
+
+  - name: remove_image
+    description: Remove one imported image by name or path.
+    source_file: scripts/remove_image.py
+    input_schema:
+      type: object
+      required: [image]
+      properties: {image: {type: string, minLength: 1}}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: sync
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 120
+    annotations: {read_only_hint: false, destructive_hint: true, idempotent_hint: false, open_world_hint: false, deferred_hint: false}
+
+  - name: list_export_items
+    description: List texture export items and optionally resolve their output paths.
+    source_file: scripts/list_export_items.py
+    input_schema:
+      type: object
+      properties:
+        geometry: {type: string, minLength: 1}
+        root_path: {type: string, minLength: 1}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: sync
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 60
+    annotations: {read_only_hint: true, destructive_hint: false, idempotent_hint: true, open_world_hint: true, deferred_hint: false}
+
+  - name: configure_export_item
+    description: Create or update an export item for one source node.
+    source_file: scripts/configure_export_item.py
+    input_schema:
+      type: object
+      required: [source_node, file_template]
+      properties:
+        geometry: {type: string, minLength: 1}
+        source_node: {type: string, minLength: 1}
+        file_template: {type: string, minLength: 1}
+        enabled: {type: boolean}
+        resolution: {type: string, minLength: 1}
+        colorspace: {type: string, minLength: 1}
+        depth: {type: string, minLength: 1}
+        uv_indices:
+          type: array
+          maxItems: 10000
+          items: {type: integer}
+        post_process: {type: string}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: sync
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 180
+    annotations: {read_only_hint: false, destructive_hint: false, idempotent_hint: true, open_world_hint: false, deferred_hint: false}
+
+  - name: remove_export_item
+    description: Remove the export item associated with one source node.
+    source_file: scripts/remove_export_item.py
+    input_schema:
+      type: object
+      required: [source_node]
+      properties:
+        geometry: {type: string, minLength: 1}
+        source_node: {type: string, minLength: 1}
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: sync
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 120
+    annotations: {read_only_hint: false, destructive_hint: true, idempotent_hint: false, open_world_hint: false, deferred_hint: false}
+
+  - name: export_textures
+    description: Export enabled or selected texture items to an existing absolute directory.
+    source_file: scripts/export_textures.py
+    input_schema:
+      type: object
+      required: [root_path]
+      properties:
+        geometry: {type: string, minLength: 1}
+        root_path: {type: string, minLength: 1}
+        source_nodes:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items: {type: string, minLength: 1}
+        overrides:
+          type: object
+          properties:
+            RESOLUTION: {type: string}
+            COLORSPACE: {type: string}
+            DEPTH: {type: string}
+            POST_PROCESS: {type: string}
+          additionalProperties: false
+      additionalProperties: false
+    output_schema: {type: object}
+    execution: async
+    affinity: main
+    enforce_thread_affinity: true
+    timeout_hint_secs: 1200
+    annotations: {read_only_hint: false, destructive_hint: false, idempotent_hint: false, open_world_hint: true, deferred_hint: true}

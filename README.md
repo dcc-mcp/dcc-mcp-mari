@@ -1,26 +1,60 @@
 # dcc-mcp-mari
 
-Mari adapter foundation for the DCC-MCP organization.
+Production-oriented [DCC-MCP](https://github.com/dcc-mcp) adapter for Foundry
+Mari. It exposes project, geometry, channel, node graph, layer, shader, image,
+and texture-export workflows as typed tools without arbitrary Python execution.
+The host plugin supports Mari 5.0 and newer while keeping the DCC-MCP runtime
+in a separately installed Python 3.9+ sidecar.
 
-This is an experimental, read-only first slice. It is **not** in the released
-`dcc-mcp-cli dcc-types` catalog yet.
+## Architecture
 
-## Scope
-
-- Discover the terminal/Python boundary.
-- Expose one typed, read-only project inspection tool.
-- Keep host API calls outside the MCP HTTP worker.
-- Do not expose arbitrary source evaluation.
+Mari loads a small standard-library plugin on its GUI thread. The plugin owns an
+authenticated loopback socket and starts the separately installed DCC-MCP
+sidecar. A Qt timer executes bounded Mari API commands on the host thread, while
+networking, discovery, jobs, and Gateway integration stay outside Mari's bundled
+Python environment.
 
 ## Install
 
-```bash
-python -m pip install -e ".[test]"
-dcc-mcp-mari
+```powershell
+python -m pip install dcc-mcp-mari
+dcc-mcp-mari install
 ```
 
-Configure the bridge environment variables in `src/dcc_mcp_mari/bridge.py`.
-A real Mari live smoke is required before catalog onboarding.
+Restart Mari after installation. The default Windows target is
+`Documents/Mari/Scripts`. Override it for a custom `MARI_SCRIPT_PATH`:
 
-Official API reference: https://learn.foundry.com/mari/content/software_api_overview/using_python/python_in_mari.html
+```powershell
+dcc-mcp-mari install --script-dir "D:/Mari/Scripts" --overwrite
+```
 
+Uninstall only this adapter's startup files:
+
+```powershell
+dcc-mcp-mari uninstall
+```
+
+## Capability groups
+
+- `mari-session`: connection and full project lifecycle, including archive,
+  rename, duplicate, and removal.
+- `mari-geometry`: geometry and channel lifecycle.
+- `mari-nodegraph`: nodes, connections, and layer stacks.
+- `mari-lookdev`: shaders, images, export items, and texture export.
+
+All host mutations require a live Mari process. File inputs must be existing
+absolute paths, output parents must already exist, and destructive operations
+are explicitly annotated for DCC-MCP clients.
+
+## Development
+
+```powershell
+python -m pip install -e ".[dev]"
+python -m ruff check src tests
+python -m ruff format --check src tests
+python -m pytest
+python -m build
+python -m twine check dist/*
+```
+
+Mari Python API reference: [Using Python in Mari](https://learn.foundry.com/mari/content/software_api_overview/using_python/python_in_mari.html).
