@@ -10,7 +10,7 @@ metadata:
   dcc-mcp:
     dcc: mari
     layer: domain
-    version: "0.2.0"  # x-release-please-version
+    version: "0.2.1"  # x-release-please-version
     stage: nodegraph
     search-hint: "Mari node graph paint node connect layer stack blend adjustment procedural"
     tags: "mari,nodegraph,layer,paint"

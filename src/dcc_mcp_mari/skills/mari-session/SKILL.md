@@ -11,7 +11,7 @@ metadata:
   dcc-mcp:
     dcc: mari
     layer: domain
-    version: "0.2.0"  # x-release-please-version
+    version: "0.2.1"  # x-release-please-version
     stage: session
     search-hint: "Mari project session create open save close archive rename duplicate remove"
     tags: "mari,project,session,archive"
