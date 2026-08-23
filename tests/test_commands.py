@@ -1,3 +1,4 @@
+import sys
 import time
 from types import SimpleNamespace
 
@@ -92,6 +93,7 @@ def test_ping_and_project_inspection_return_bounded_json_values():
     inspected = commands.execute("project.inspect", {})
 
     assert ping["mari_version"] == "7.5v2"
+    assert ping["python_version"] == sys.version.split()[0]
     assert ping["command_count"] == 39
     assert inspected["project"]["uuid"] == "project-uuid"
     assert inspected["geometry"] == []

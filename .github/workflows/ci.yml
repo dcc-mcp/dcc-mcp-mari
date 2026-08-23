@@ -31,6 +31,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[test]"
+      - name: Lifecycle plan and receipt round-trip
+        run: python -m pytest tests/test_install_lifecycle.py::test_standard_lifecycle_round_trip_writes_and_consumes_receipt -q
       - run: python -m pytest
 
   lint-and-build:
