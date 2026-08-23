@@ -1,3 +1,9 @@
+import importlib.util
+import json
+import sys
+import types
+from pathlib import Path
+
 import pytest
 
 from dcc_mcp_mari import install
@@ -37,3 +43,46 @@ def test_failed_install_rolls_back_owned_paths(tmp_path, monkeypatch):
 
     assert not (scripts / "dcc_mcp_mari_host").exists()
     assert not (scripts / "dcc_mcp_mari_bootstrap.py").exists()
+
+
+def test_overwrite_stages_before_preserving_previous_plugin(tmp_path, monkeypatch):
+    scripts = tmp_path / "Scripts"
+    plugin = scripts / "dcc_mcp_mari_host"
+    plugin.mkdir(parents=True)
+    marker = plugin / "previous.txt"
+    marker.write_text("previous", encoding="utf-8")
+    bootstrap = scripts / "dcc_mcp_mari_bootstrap.py"
+    bootstrap.write_text("previous bootstrap\n", encoding="utf-8")
+    executable = tmp_path / "dcc-mcp-mari"
+    executable.touch()
+    monkeypatch.setattr(install, "_find_server_executable", lambda: executable)
+    monkeypatch.setattr(
+        install.shutil,
+        "copytree",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("staging failed")),
+    )
+
+    with pytest.raises(OSError, match="staging failed"):
+        install.install_plugin(scripts, overwrite=True)
+
+    assert marker.read_text(encoding="utf-8") == "previous"
+    assert bootstrap.read_text(encoding="utf-8") == "previous bootstrap\n"
+
+
+def test_bootstrap_captures_plugin_start_failure(tmp_path, monkeypatch):
+    error_log = tmp_path / "bootstrap-errors.jsonl"
+    monkeypatch.setenv("DCC_MCP_MARI_BOOTSTRAP_ERRORS", str(error_log))
+    host_module = types.ModuleType("dcc_mcp_mari_host")
+    host_module.start = lambda: (_ for _ in ()).throw(RuntimeError("plugin startup failed"))
+    monkeypatch.setitem(sys.modules, "dcc_mcp_mari_host", host_module)
+    bootstrap = Path(install.__file__).resolve().parent / "mari_bootstrap.py"
+    spec = importlib.util.spec_from_file_location("_dcc_mcp_mari_bootstrap_test", bootstrap)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+
+    with pytest.raises(RuntimeError, match="plugin startup failed"):
+        spec.loader.exec_module(module)
+
+    event = json.loads(error_log.read_text(encoding="utf-8"))
+    assert event["stage"] == "plugin_start"
+    assert event["error_type"] == "RuntimeError"

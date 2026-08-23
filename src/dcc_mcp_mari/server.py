@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import signal
 import sys
 import threading
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from typing import Any, Mapping, Optional, Sequence
 
 from dcc_mcp_core import DccServerOptions, HostExecutionBridge
 from dcc_mcp_core.host import QueueDispatcher, StandaloneHost
@@ -18,7 +19,7 @@ from dcc_mcp_core.server_base import DccServerBase
 from . import bridge
 from .__version__ import __version__
 from .dispatcher import MariBridgeDispatcher
-from .install import default_script_dir, install_plugin, uninstall_plugin
+from .install import LifecycleRequest, default_script_dir, run_lifecycle
 
 _server: Optional["MariMcpServer"] = None
 
@@ -189,12 +190,31 @@ def _build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--bridge-port", type=int, required=True)
     serve.add_argument("--mcp-port", type=int)
 
-    install = subparsers.add_parser("install", help="Install the Mari startup plugin.")
-    install.add_argument("--script-dir", type=Path, default=default_script_dir())
-    install.add_argument("--overwrite", action="store_true")
-
-    uninstall = subparsers.add_parser("uninstall", help="Remove the Mari startup plugin.")
-    uninstall.add_argument("--script-dir", type=Path, default=default_script_dir())
+    lifecycle_help = {
+        "install": "Install the Mari startup plugin.",
+        "status": "Inspect the receipt-owned Mari installation.",
+        "verify": "Verify installed files and live Mari readiness.",
+        "uninstall": "Remove receipt-owned files and restore prior files.",
+        "upgrade": "Replace the Mari startup plugin transactionally.",
+    }
+    for operation, help_text in lifecycle_help.items():
+        command = subparsers.add_parser(operation, help=help_text)
+        command.add_argument("--json", action="store_true", dest="json_output")
+        command.add_argument("--yes", action="store_true")
+        command.add_argument("--dry-run", action="store_true")
+        command.add_argument("--repair", action="store_true")
+        command.add_argument("--dcc-path", type=Path)
+        command.add_argument(
+            "--python", type=Path, default=Path(sys.executable), dest="python_path"
+        )
+        command.add_argument("--script-dir", type=Path, default=default_script_dir())
+        if operation == "install":
+            command.add_argument(
+                "--overwrite",
+                action="store_true",
+                dest="repair",
+                help="Compatibility alias for --repair.",
+            )
     return parser
 
 
@@ -220,18 +240,38 @@ def _run_sidecar(args: argparse.Namespace) -> None:
         stop_server()
 
 
-def main(argv: Optional[Sequence[str]] = None) -> None:
+def _print_lifecycle_result(result: Mapping[str, Any], *, json_output: bool) -> None:
+    if json_output:
+        print(json.dumps(result, sort_keys=True))
+        return
+    print("%s: %s" % (result.get("status", "unknown"), result.get("reason", "")))
+    for step in result.get("next_steps", []):
+        command = step.get("command") if isinstance(step, Mapping) else None
+        if isinstance(command, list):
+            print("next: %s" % " ".join(str(part) for part in command))
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:
     """Dispatch installation commands or run a host-bound sidecar."""
     args = _build_parser().parse_args(list(argv) if argv is not None else sys.argv[1:])
-    if args.command == "install":
-        print(install_plugin(args.script_dir, overwrite=args.overwrite))
-        return
-    if args.command == "uninstall":
-        removed = uninstall_plugin(args.script_dir)
-        print("removed" if removed else "not installed")
-        return
+    if args.command != "serve":
+        result = run_lifecycle(
+            LifecycleRequest(
+                operation=args.command,
+                dcc_path=args.dcc_path,
+                python_path=args.python_path,
+                script_dir=args.script_dir,
+                yes=args.yes,
+                dry_run=args.dry_run,
+                json_output=args.json_output,
+                repair=args.repair,
+            )
+        )
+        _print_lifecycle_result(result, json_output=args.json_output)
+        return int(result["exit_code"])
     _run_sidecar(args)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

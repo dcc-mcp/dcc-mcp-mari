@@ -8,6 +8,7 @@ PySide2 are guaranteed to exist.
 from __future__ import annotations
 
 import os
+import sys
 import threading
 import time
 from pathlib import Path
@@ -83,6 +84,7 @@ class MariCommands:
         return {
             "status": "ok",
             "mari_version": _app_version(app),
+            "python_version": sys.version.split()[0],
             "app_running": bool(_optional_call(app, "isRunning", True)),
             "log_file": str(_optional_call(app, "logFileName", "") or ""),
             "host_pid": os.getpid(),

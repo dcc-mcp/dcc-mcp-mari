@@ -16,22 +16,27 @@ Python environment.
 
 ## Install
 
+The authoritative agent-first lifecycle, platform paths, stable JSON schema,
+exit codes, recovery behavior, and troubleshooting are in
+[`install.md`](install.md).
+
 ```powershell
 python -m pip install dcc-mcp-mari
-dcc-mcp-mari install
+dcc-mcp-mari install --dcc-path <mari-executable> --python <python> --dry-run --json
+dcc-mcp-mari install --dcc-path <mari-executable> --python <python> --yes --json
 ```
 
 Restart Mari after installation. The default Windows target is
 `Documents/Mari/Scripts`. Override it for a custom `MARI_SCRIPT_PATH`:
 
 ```powershell
-dcc-mcp-mari install --script-dir "D:/Mari/Scripts" --overwrite
+dcc-mcp-mari install --dcc-path <mari-executable> --python <python> --script-dir "D:/Mari/Scripts" --yes --json
 ```
 
 Uninstall only this adapter's startup files:
 
 ```powershell
-dcc-mcp-mari uninstall
+dcc-mcp-mari uninstall --dcc-path <mari-executable> --python <python> --yes --json
 ```
 
 ## Capability groups
