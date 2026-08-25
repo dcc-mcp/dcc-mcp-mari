@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/dcc-mcp/dcc-mcp-mari/compare/v0.2.1...v0.3.0) (2026-08-25)
+
+
+### Features
+
+* standardize Mari install lifecycle ([9d42051](https://github.com/dcc-mcp/dcc-mcp-mari/commit/9d42051c09518178214d27582220545a8cc69100))
+
 ## [0.2.1](https://github.com/dcc-mcp/dcc-mcp-mari/compare/v0.2.0...v0.2.1) (2026-08-10)
 
 

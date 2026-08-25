@@ -10,7 +10,7 @@ metadata:
   dcc-mcp:
     dcc: mari
     layer: domain
-    version: "0.2.1"  # x-release-please-version
+    version: "0.3.0"  # x-release-please-version
     stage: lookdev
     search-hint: "Mari shader image texture export item colorspace resolution depth UDIM"
     tags: "mari,shader,image,export,lookdev"
