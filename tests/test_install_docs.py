@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import json
+import re
 from pathlib import Path
 
 import yaml
+
+from dcc_mcp_mari.__version__ import __version__
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
@@ -43,3 +47,33 @@ def test_ci_runs_explicit_lifecycle_plan_and_receipt_round_trip() -> None:
     names = {step.get("name") for step in steps}
 
     assert "Lifecycle plan and receipt round-trip" in names
+
+
+def test_install_guide_wheel_pin_tracks_release_metadata() -> None:
+    guide = (REPOSITORY_ROOT / "install.md").read_text(encoding="utf-8")
+    project = (REPOSITORY_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    manifest = json.loads(
+        (REPOSITORY_ROOT / ".release-please-manifest.json").read_text(encoding="utf-8")
+    )
+    release_config = json.loads(
+        (REPOSITORY_ROOT / "release-please-config.json").read_text(encoding="utf-8")
+    )
+
+    guide_pin = re.search(
+        r'^python -m pip install "dcc-mcp-mari==([^"]+)"\s+# x-release-please-version$',
+        guide,
+        re.MULTILINE,
+    )
+    project_version = re.search(r'^version="([^"]+)"$', project, re.MULTILINE)
+
+    assert guide_pin is not None
+    assert project_version is not None
+    assert {
+        guide_pin.group(1),
+        project_version.group(1),
+        manifest["."],
+        __version__,
+    } == {__version__}
+    assert {"type": "generic", "path": "install.md"} in release_config["packages"]["."][
+        "extra-files"
+    ]

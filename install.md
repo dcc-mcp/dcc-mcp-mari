@@ -34,7 +34,7 @@ explicit `--dcc-path` when more than one Mari release is installed.
 Install the wheel into the selected external Python first:
 
 ```shell
-python -m pip install "dcc-mcp-mari==0.2.1"
+python -m pip install "dcc-mcp-mari==0.3.0"  # x-release-please-version
 python -m dcc_mcp_mari.server install --dcc-path <mari-executable> --python <python> --dry-run --json
 python -m dcc_mcp_mari.server install --dcc-path <mari-executable> --python <python> --yes --json
 python -m dcc_mcp_mari.server status --dcc-path <mari-executable> --python <python> --json
