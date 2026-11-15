@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/dcc-mcp/dcc-mcp-mari/compare/v0.3.0...v0.3.1) (2026-11-15)
+
+
+### Documentation
+
+* refresh the generated DCC-MCP host matrix pointer ([92619d8](https://github.com/dcc-mcp/dcc-mcp-mari/commit/92619d8448b5e20b5d694779ec8c6a7bd84f8507))
+* refresh the generated DCC-MCP host matrix pointer ([620dda4](https://github.com/dcc-mcp/dcc-mcp-mari/commit/620dda40816a71664075e404b31d296fb00ccf63))
+
 ## [0.3.0](https://github.com/dcc-mcp/dcc-mcp-mari/compare/v0.2.1...v0.3.0) (2026-08-25)
 
 
